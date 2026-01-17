@@ -1,0 +1,164 @@
+import React, { useEffect, useState } from "react";
+import { Router, Switch, Route, useLocation } from "wouter";
+import { apiRequest, queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { EventsSearchProvider } from "./context/EventsSearchContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useToast } from '@/hooks/use-toast';
+import { initializeFCM } from "@/services/pushNotificationService";
+import NotFound from "@/pages/not-found";
+import Landing from "@/pages/Landing";
+import Home from "@/pages/Home";
+import Events from "./pages/Events";
+import EventCreate from "./pages/EventCreate";
+import Challenges from "./pages/Challenges";
+import Friends from "./pages/Friends";
+import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
+import ProfileSettings from "./pages/ProfileSettings";
+import History from "./pages/History";
+import Notifications from "./pages/Notifications";
+import WalletPage from "@/pages/WalletPage";
+import Shop from "@/pages/Shop";
+import ReferralNew from "./pages/ReferralNew";
+import Settings from "@/pages/Settings";
+import SupportChat from "@/pages/SupportChat";
+import HelpSupport from "@/pages/HelpSupport";
+import TermsOfService from "@/pages/TermsOfService";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import DataDeletionRequest from "@/pages/DataDeletionRequest";
+import Leaderboard from "./pages/Leaderboard";
+import About from "./pages/About";
+import PointsAndBadges from "./pages/PointsAndBadges";
+import ChallengeDetail from "./pages/ChallengeDetail";
+import Recommendations from "./pages/Recommendations";
+import EventChatPage from "./pages/EventChatPage";
+import AdminDashboardOverview from "./pages/AdminDashboardOverview";
+import AdminEventPayouts from "./pages/AdminEventPayouts";
+import AdminChallengePayouts from "./pages/AdminChallengePayouts";
+import AdminChallengeCreate from "./pages/AdminChallengeCreate";
+import AdminChallengeDisputes from "./pages/AdminChallengeDisputes";
+import AdminTransactions from "./pages/AdminTransactions";
+import AdminPayouts from "./pages/AdminPayouts";
+import AdminPayoutDashboard from "./pages/AdminPayoutDashboard";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminBonusConfiguration from "./pages/AdminBonusConfiguration";
+import AdminNotifications from "@/pages/AdminNotifications";
+import AdminUsersManagement from "./pages/AdminUsersManagement";
+import AdminSettings from "./pages/AdminSettings";
+import AdminWallet from "./pages/AdminWallet";
+
+import { DailyLoginModal } from '@/components/DailyLoginModal';
+import { useDailyLoginPopup } from '@/hooks/useDailyLoginPopup';
+import AdminLogin from "@/pages/AdminLogin";
+import { WebsiteTour, useTour } from "@/components/WebsiteTour";
+import { SplashScreen } from "@/components/SplashScreen";
+import AddToHomePrompt from "@/components/AddToHomePrompt";
+import TelegramTest from "./pages/TelegramTest";
+import TelegramLink from "@/pages/TelegramLink";
+import Bantzz from "./pages/Bantzz";
+import Stories from "./pages/Stories";
+import BantMap from "./pages/BantMap";
+import NotificationTest from "./pages/NotificationTest";
+import PublicProfile from "@/pages/PublicProfile";
+import { Navigation } from "@/components/Navigation";
+import { ErrorBoundary } from "react-error-boundary";
+import { Suspense, lazy } from "react";
+import EventDetails from "./pages/EventDetails";
+import ChallengeChatPage from "./pages/ChallengeChatPage";
+import { PrivyProvider } from '@privy-io/react-auth';
+import { privyConfig } from './lib/privyConfig';
+
+function AppRouter() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen transition-all duration-300 ease-in-out">
+      {!isLoading && (
+        <div className="sticky top-0 z-50">
+          <Navigation />
+        </div>
+      )}
+
+      <Switch>
+        <Route path="/" component={Challenges} />
+        <Route path="/events" component={Events} />
+        <Route path="/home" component={Home} />
+        <Route path="/challenges" component={Challenges} />
+        <Route path="/friends" component={Friends} />
+        <Route path="/profile" component={Profile} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
+  );
+}
+
+function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PrivyProvider
+        appId={privyConfig.appId}
+        config={privyConfig.config}
+      >
+        <ThemeProvider>
+          <EventsSearchProvider>
+            <div className={`${isMobile ? 'mobile-app' : ''}`}>
+              {showSplash ? (
+                <SplashScreen onComplete={handleSplashComplete} />
+              ) : (
+                <TooltipProvider>
+                  <Toaster />
+                  <AddToHomePrompt />
+                  <ErrorBoundary
+                    fallback={<div className="p-4 text-center">Something went wrong. Please refresh the page.</div>}
+                    onError={(error) => console.error("App Error:", error)}
+                  >
+                    <Router>
+                      <AppRouter />
+                    </Router>
+                  </ErrorBoundary>
+                </TooltipProvider>
+              )}
+            </div>
+          </EventsSearchProvider>
+        </ThemeProvider>
+      </PrivyProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
